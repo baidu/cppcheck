@@ -24,6 +24,8 @@
 #include "config.h"
 #include "mathlib.h"
 #include "valueflow.h"
+////tsc
+#include "tokenex.h"
 
 #include <cstddef>
 #include <list>
@@ -38,7 +40,8 @@ class Settings;
 class Type;
 class ValueType;
 class Variable;
-
+////tsc
+#define SIZE_OF_PATTEN "sizeof|decltype|typeof|typeid|__typeof__"
 /// @addtogroup Core
 /// @{
 
@@ -297,6 +300,8 @@ public:
     bool isBoolean() const {
         return _tokType == eBoolean;
     }
+    ////tsc
+    bool isString() const { return _tokType == eString; }
     bool isUnaryPreOp() const;
 
     unsigned int flags() const {
@@ -346,6 +351,19 @@ public:
     }
     void isCast(bool c) {
         setFlag(fIsCast, c);
+    }
+    ////tsc add
+    bool isDynamicCast() const {
+        return getFlag(fIsDynamicCast);
+    }
+    void isDynamicCast(bool d) {
+        setFlag(fIsDynamicCast, d);
+    }
+    bool isExpandedEnum() const {
+        return getFlag(fIsExpandedEnum);
+    }
+    void isExpandedEnum(bool d) {
+        setFlag(fIsExpandedEnum, d);
     }
     bool isAttributeConstructor() const {
         return getFlag(fIsAttributeConstructor);
@@ -642,6 +660,8 @@ public:
     const Scope *scope() const {
         return _scope;
     }
+    ////tsc
+    bool isInScope(unsigned type) const;
 
     /**
      * Associate this token with given function
@@ -927,6 +947,9 @@ private:
         fIsName                 = (1 << 20),
         fIsLiteral              = (1 << 21),
         fIsTemplateArg          = (1 << 22),
+        ////tsc
+        fIsDynamicCast = (1 << 23),
+        fIsExpandedEnum = (1 << 24)
     };
 
     unsigned int _flags;
@@ -990,7 +1013,30 @@ public:
             ret = ret->_astParent;
         return ret;
     }
+    ////tsc
+    bool astUnderSizeof() const {
+        const Token *tok = this;
+        const Token* tok2 = tok->astParent();
+        while (tok2 && tok2->_astParent && !Token::Match(tok2, SIZE_OF_PATTEN))
+        {
+            if (Token::Match(tok2->astOperand1(), SIZE_OF_PATTEN))
+            {
+                return true;
+            }
+            tok = tok2;
+            tok2 = tok2->astParent();
+        }
+        if (tok2)
+        {
+            if (Token::Match(tok2->astOperand1(), SIZE_OF_PATTEN))
+            {
+                return true;
+            }
 
+        }
+
+        return false;
+    }
     /**
      * Is current token a calculation? Only true for operands.
      * For '*' and '&' tokens it is looked up if this is a
@@ -1025,6 +1071,15 @@ public:
     void printAst(bool verbose, bool xml, std::ostream &out) const;
 
     void printValueFlow(bool xml, std::ostream &out) const;
+    ////tsc
+    static std::set<std::string> stdTypes;
+    const Scope* get_current_scope() const;
+    const Scope* get_func_scope() const;
+public:
+    const TokenEx& GetTokenEx() const { return m_tokenEx; }
+    TokenEx& GetTokenEx() { return m_tokenEx; }
+private:
+    TokenEx m_tokenEx;
 };
 
 /// @}

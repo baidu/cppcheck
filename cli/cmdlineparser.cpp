@@ -789,7 +789,7 @@ bool CmdLineParser::ParseFromArgs(int argc, const char* const argv[])
 
     // Print error only if we have "real" command and expect files
     if (!_exitAfterPrint && _pathnames.empty() && _settings->project.fileSettings.empty()) {
-        PrintMessage("cppcheck: No C or C++ source files found.");
+        PrintMessage("cppcheck: No C or C++ source files found in path.");
         return false;
     }
 

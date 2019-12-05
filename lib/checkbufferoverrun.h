@@ -27,6 +27,8 @@
 #include "errorlogger.h"
 #include "mathlib.h"
 #include "tokenize.h"
+////tsc
+#include "checktscoverrun.h"
 
 #include <cstddef>
 #include <list>
@@ -84,6 +86,11 @@ public:
         checkBufferOverrun.checkInsecureCmdLineArgs();
         checkBufferOverrun.arrayIndexThenCheck();
         checkBufferOverrun.negativeArraySize();
+        ////tsc
+        CheckTSCOverrun checkTSCOverrun(tokenizer, settings, errorLogger);
+        checkTSCOverrun.SetReportedErrors(&checkBufferOverrun.m_reportedErrors);
+        checkTSCOverrun.runSimplifiedChecks(tokenizer, settings, errorLogger);
+        checkBufferOverrun.check_self_added_subscript();
     }
 
     void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) {
@@ -123,7 +130,9 @@ public:
 
     /** Check for buffer overruns due to copying command-line args to fixed-sized buffers without bounds checking */
     void checkInsecureCmdLineArgs();
-
+    ////tsc
+    void  check_self_added_subscript();
+    void  self_added_subscript_error(const Token *tok, const std::string &indexName);
     /** Information about N-dimensional array */
     class CPPCHECKLIB ArrayInfo {
     private:
@@ -298,6 +307,9 @@ public:
         c.negativeArraySizeError(nullptr);
         c.reportError(nullptr, Severity::warning, "arrayIndexOutOfBoundsCond", "Array 'x[10]' accessed at index 20, which is out of bounds. Otherwise condition 'y==20' is redundant.", CWE119, false);
     }
+    ////tsc
+    std::set<const Token* > m_reportedErrors;
+
 private:
 
     static std::string myName() {

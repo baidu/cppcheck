@@ -24,7 +24,8 @@
 #include "token.h"
 #include "tokenlist.h"
 #include "utils.h"
-
+////tsc
+#include "symboldatabase.h"
 #include <tinyxml2.h>
 #include <array>
 #include <cassert>
@@ -32,7 +33,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
-
+////tsc
+#include <fstream>
 InternalError::InternalError(const Token *tok, const std::string &errorMsg, Type type) :
     token(tok), errorMessage(errorMsg)
 {
@@ -676,3 +678,98 @@ std::string ErrorLogger::plistData(const ErrorLogger::ErrorMessage &msg)
     return plist.str();
 }
 
+void ErrorLogger::GetScopeFuncInfo(const Scope* s, std::string &_lastFuncName)
+{
+    if (!s)
+    {
+        _lastFuncName.clear();
+        return;
+    }
+
+    if (s->type == Scope::eFunction)
+    {
+        if (!s->classStart || !s->classEnd || !s->classDef)
+        {
+            _lastFuncName.clear();
+            return;
+        }
+        Token *funcStart = const_cast<Token*>(s->classDef);
+        while (funcStart->previous() && s->classDef->linenr() == funcStart->linenr() && !Token::Match(funcStart->previous(), "{|}|;|public:|protected:|private:"))
+        {
+            funcStart = funcStart->previous();
+        }
+        if (!funcStart)
+        {
+            _lastFuncName.clear();
+            return;
+        }
+        std::string strFuncInfo;
+        if (!s->nestedIn || s->nestedIn->className.empty())
+        {
+            for (const Token *tok = funcStart; tok && tok != s->classStart; tok = tok->next())
+            {
+                strFuncInfo += tok->str();
+                if (tok->str() != "::" && !Token::Match(tok->next(), "::"))
+                {
+                    strFuncInfo += " ";
+                }
+            }
+        }
+        else
+        {
+            if (Token::Match(s->classDef->previous(), "::"))
+            {
+                for (const Token *tok = funcStart; tok && tok != s->classStart; tok = tok->next())
+                {
+                    strFuncInfo += tok->str();
+                    if (tok->str() != "::" && !Token::Match(tok->next(), "::"))
+                    {
+                        strFuncInfo += " ";
+                    }
+                }
+            }
+            else
+            {
+                for (const Token *tok = funcStart; tok && tok != s->classDef; tok = tok->next())
+                {
+                    strFuncInfo += tok->str();
+                    if (tok->str() != "::" && !Token::Match(tok->next(), "::"))
+                    {
+                        strFuncInfo += " ";
+                    }
+                }
+                strFuncInfo += s->nestedIn->className;
+                strFuncInfo += "::";
+                for (const Token *tok = s->classDef; tok && tok != s->classStart; tok = tok->next())
+                {
+                    strFuncInfo += tok->str();
+                    strFuncInfo += " ";
+                }
+            }
+        }
+        if (strFuncInfo.empty())
+        {
+            _lastFuncName.clear();
+            return;
+        }
+        _lastFuncName = strFuncInfo.substr(0, strFuncInfo.length() - 1);
+        return;
+    }
+    else if (s->type < Scope::eFunction)
+    {
+        if (s->type == Scope::eGlobal)
+            _lastFuncName = "global";
+        else
+            _lastFuncName = s->className;
+
+        while (s->nestedIn && !s->nestedIn->className.empty())
+        {
+            _lastFuncName = s->nestedIn->className + "::" + _lastFuncName;
+            s = s->nestedIn;
+        }
+        return;
+    }
+
+    _lastFuncName.clear();
+    return;
+}

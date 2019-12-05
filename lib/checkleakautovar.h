@@ -25,6 +25,7 @@
 #include "check.h"
 #include "config.h"
 #include "library.h"
+#include "process_config.h"
 
 #include <map>
 #include <set>
@@ -109,11 +110,12 @@ private:
     /** check for leaks in a function scope */
     void checkScope(const Token * const startToken,
                     VarInfo *varInfo,
-                    std::set<unsigned int> notzero);
+                    std::set<unsigned int> notzero, std::vector<std::string>& exit_vec, std::vector<std::string>& null_vec);
 
-    /** parse function call */
+    /** parse function call, share ptr as fp()*/
     void functionCall(const Token *tok, VarInfo *varInfo, const VarInfo::AllocInfo& allocation, const Library::AllocFunc* af);
-
+    /** parse function call, share ptr as fp = { , }*/
+    void function_call_share_ptr(const Token *tok, VarInfo *varInfo, const VarInfo::AllocInfo& allocation, const Library::AllocFunc* af);
     /** parse changes in allocation status */
     void changeAllocStatus(VarInfo *varInfo, const VarInfo::AllocInfo& allocation, const Token* tok, const Token* arg);
 
@@ -146,6 +148,8 @@ private:
     std::string classInfo() const {
         return "Detect when a auto variable is allocated but not deallocated or deallocated twice.\n";
     }
+
+    CommonFile _common_file;
 };
 /// @}
 //---------------------------------------------------------------------------

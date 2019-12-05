@@ -28,6 +28,7 @@
     <ClCompile Include="..\cli\cppcheckexecutor.cpp" />
     <ClCompile Include="..\cli\filelister.cpp" />
     <ClCompile Include="..\cli\threadexecutor.cpp" />
+    <ClCompile Include="..\lib\process_config.cpp" />
     <ClCompile Include="options.cpp" />
     <ClCompile Include="test64bit.cpp" />
     <ClCompile Include="testassert.cpp" />
@@ -96,6 +97,7 @@
     <ClInclude Include="..\cli\filelister.h" />
     <ClInclude Include="..\cli\threadexecutor.h" />
     <ClInclude Include="..\lib\config.h" />
+    <ClInclude Include="..\lib\process_config.h" />
     <ClInclude Include="options.h" />
     <ClInclude Include="redirect.h" />
     <ClInclude Include="testsuite.h" />
@@ -111,7 +113,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>

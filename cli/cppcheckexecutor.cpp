@@ -34,6 +34,7 @@
 #include "threadexecutor.h"
 #include "utils.h"
 #include "checkunusedfunctions.h"
+#include "process_config.h"
 
 #include <csignal>
 #include <cstdio>
@@ -136,6 +137,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
             }
         }
     }
+    settings.load_custom_cfg_xml("cfg/cfg.xml", argv[0]); //suppress return warning
 
     // Output a warning for the user if he tries to exclude headers
     bool warn = false;
@@ -811,6 +813,10 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
 {
     Settings& settings = cppcheck.settings();
     _settings = &settings;
+
+    std::string xml_conf_path = _settings->_xml_conf_path;
+    ProcessConfig::load_xml_conf_dir(xml_conf_path);
+
     const bool std = tryLoadLibrary(settings.library, argv[0], "std.cfg");
     bool posix = true;
     if (settings.standards.posix)
@@ -924,8 +930,8 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
 
     if (!settings.checkConfiguration) {
         cppcheck.tooManyConfigsError("",0U);
-
-        if (settings.isEnabled(Settings::MISSING_INCLUDE) && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
+        // close missingIncludeSystem
+        /*if (settings.isEnabled(Settings::MISSING_INCLUDE) && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
             const std::list<ErrorLogger::ErrorMessage::FileLocation> callStack;
             ErrorLogger::ErrorMessage msg(callStack,
                                           emptyString,
@@ -939,7 +945,7 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
                                           Preprocessor::missingIncludeFlag ? "missingInclude" : "missingIncludeSystem",
                                           false);
             reportInfo(msg);
-        }
+        }*/
     }
 
     if (settings.xml) {

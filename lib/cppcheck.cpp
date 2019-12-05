@@ -56,6 +56,9 @@ static const CWE CWE398(398U);  // Indicator of Poor Code Quality
 CppCheck::CppCheck(ErrorLogger &errorLogger, bool useGlobalSuppressions)
     : _errorLogger(errorLogger), exitcode(0), _useGlobalSuppressions(useGlobalSuppressions), tooManyConfigs(false), _simplify(true)
 {
+    // config file
+    std::string xml_conf_path = _settings._xml_conf_path;
+    ProcessConfig::load_xml_conf_dir(xml_conf_path);
 }
 
 CppCheck::~CppCheck()
@@ -165,6 +168,8 @@ unsigned int CppCheck::processFile(const std::string& filename, const std::strin
             };
 
             if (err) {
+                // close rule syntaxError
+                return 1;
                 const ErrorLogger::ErrorMessage::FileLocation loc1(it->location.file(), it->location.line);
                 std::list<ErrorLogger::ErrorMessage::FileLocation> callstack;
                 callstack.push_back(loc1);

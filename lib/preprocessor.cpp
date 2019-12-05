@@ -701,6 +701,8 @@ void Preprocessor::error(const std::string &filename, unsigned int linenr, const
         ErrorLogger::ErrorMessage::FileLocation loc(filename, linenr);
         locationList.push_back(loc);
     }
+    // close rule preprocessorErrorDirective
+    return;
     _errorLogger->reportErr(ErrorLogger::ErrorMessage(locationList,
                             file0,
                             Severity::error,
@@ -712,6 +714,8 @@ void Preprocessor::error(const std::string &filename, unsigned int linenr, const
 // Report that include is missing
 void Preprocessor::missingInclude(const std::string &filename, unsigned int linenr, const std::string &header, HeaderTypes headerType)
 {
+    // close missingIncludeSystem
+    return;
     const std::string fname = Path::fromNativeSeparators(filename);
     if (_settings.nomsg.isSuppressed("missingInclude", fname, linenr))
         return;

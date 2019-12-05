@@ -683,6 +683,10 @@ Token *CheckMemoryLeakInFunction::getcode(const Token *tok, std::list<const Toke
 {
     // variables whose value depends on if(!var). If one of these variables
     // is used in a if-condition then generate "ifv" instead of "if".
+    std::string exit_str = ProcessConfig::value_of_key("EXIT");
+    std::vector<std::string> exit_vec;
+    _common_file.string_split(exit_str, exit_vec, "#");
+
     std::set<unsigned int> extravar;
 
     // The first token should be ";"
@@ -1121,7 +1125,8 @@ Token *CheckMemoryLeakInFunction::getcode(const Token *tok, std::list<const Toke
         }
 
         // Return..
-        else if (tok->str() == "return") {
+        else if (tok->str() == "return" || 
+            _common_file.find_in_vector(exit_vec, tok->str()) == true) {
             addtoken(&rettail, tok, "return");
             if (varid == 0) {
                 addtoken(&rettail, tok, ";");
@@ -2653,6 +2658,10 @@ void CheckMemoryLeakNoVar::check()
                 continue;
             // locate outer function call..
             const Token* tok3 = tok;
+            //return
+            if (tok3 && tok3->astParent() && tok3->astParent()->str() == "return") {
+                continue;
+            }
             while (tok3 && tok3->astParent() && tok3->str() == ",")
                 tok3 = tok3->astParent();
             if (!tok3 || tok3->str() != "(")
@@ -2717,7 +2726,8 @@ void CheckMemoryLeakNoVar::checkForUnusedReturnValue(const Scope *scope)
 void CheckMemoryLeakNoVar::checkForUnsafeArgAlloc(const Scope *scope)
 {
     // This test only applies to C++ source
-    if (!_tokenizer->isCPP() || !_settings->inconclusive || !_settings->isEnabled(Settings::WARNING))
+    ////if (!_tokenizer->isCPP() || !_settings->inconclusive || !_settings->isEnabled(Settings::WARNING))
+    if (!_tokenizer->isCPP() || _settings->inconclusive || !_settings->isEnabled(Settings::WARNING))
         return;
 
     for (const Token *tok = scope->classStart; tok != scope->classEnd; tok = tok->next()) {

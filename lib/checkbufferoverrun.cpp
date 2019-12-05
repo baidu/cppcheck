@@ -40,6 +40,8 @@
 #include <stack>
 #include <utility>
 
+static const struct CWE CWE0(0U);
+
 //---------------------------------------------------------------------------
 
 // Register this check class (by creating a static instance of it)
@@ -2118,4 +2120,84 @@ unsigned int CheckBufferOverrun::sizeOfType(const Token *type) const
         return symbolDatabase->sizeOfType(type);
 
     return 0;
+}
+
+void CheckBufferOverrun::check_self_added_subscript()
+{
+    const SymbolDatabase * const symbolDatabase = _tokenizer->getSymbolDatabase();
+    const std::size_t functions = symbolDatabase->functionScopes.size();
+    for (std::size_t i = 0; i < functions; ++i) {
+        const Scope * const scope = symbolDatabase->functionScopes[i];
+        for (const Token *tok = scope->classStart; tok
+            && tok != scope->classEnd; tok = tok->next()) {
+            if (Token::Match(tok, "%name% [ %var% ]")) {
+                tok = tok->tokAt(2);
+
+                const unsigned int indexID = tok->varId();
+                const std::string& indexName(tok->str());
+
+                // syntax error
+                if (!tok || indexID == 0) {
+                    return;
+                }
+
+                const Token* tmpTok = tok->previous();
+                while (tmpTok && !Token::Match(tmpTok, "{|}"))
+                {
+                    if (Token::Match(tmpTok, "%varid% <|<=", indexID)
+                        || Token::Match(tmpTok, ">|>= %varid%", indexID))
+                    {
+                        break;
+                    }
+
+                    if (Token::Match(tmpTok, "%varid% ++", indexID)
+                        || Token::Match(tmpTok, "++ %varid%", indexID))
+                    {
+                        const Token* tmpTok2 = tmpTok->previous();
+                        bool has_check = false;
+                        while (tmpTok2 && tmpTok2 != scope->classEnd)
+                        {
+                            if (Token::Match(tmpTok2,
+                                "%varid% <|<=", indexID)
+                                || Token::Match(tmpTok2, ">|>= %varid%", indexID))
+                            {
+                                if (tmpTok2->next()->str() == "<"
+                                    && Token::Match(tmpTok2->next()->astOperand2(),
+                                    "- 1"))
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    has_check = true;
+                                    break;
+                                }
+                            }
+                            tmpTok2 = tmpTok2->previous();
+                        }
+                        if (has_check)
+                        {
+                            self_added_subscript_error(tmpTok, indexName);
+                            break;
+                        }
+
+                    }
+                    tmpTok = tmpTok->previous();
+
+                }
+
+            }
+        }
+    }
+}
+
+void CheckBufferOverrun::self_added_subscript_error(const Token *tok, const std::string &indexName)
+{
+    ////reportError(tok, Severity::style, ErrorType::BufferOverrun,
+    ////    "IndexSelfIncrementError",
+    ////    "Array index '" + indexName + "' is used after self-increment.",
+    ////    ErrorLogger::GenWebIdentity(indexName));
+    reportError(tok, Severity::error,
+        "IndexSelfIncrementError",
+        "Array index '" + indexName + "' is used after self-increment.", CWE0, false);
 }

@@ -66,10 +66,18 @@ private:
 
     /** @brief terminate checking */
     static bool _terminated;
-
+    ////tsc
+    ////static Settings *_instance;
+    std::map<std::string, std::set<int> > _jumpCode;
+    
+    std::map<std::string, std::string> _checkSeverity;
+    std::map<std::string, std::map<std::string, bool> > _openedChecks;
+    bool parse_func_info(std::string&, std::pair<std::string, std::vector<std::string> >& funcNotRetNull, const std::string &funcinfo);
+    const void trim(std::string &str) const;
+    void split(std::vector<std::string> &out, const std::string &input, const std::string &delim) const;
 public:
     Settings();
-
+    ////Settings & operator=(Settings&) { return *this; };
     /** @brief --cppcheck-build-dir */
     std::string buildDir;
 
@@ -145,6 +153,8 @@ public:
     /** @brief XML version (--xml-version=..) */
     int xml_version;
 
+    std::string _xml_conf_path;
+
     /** @brief How many processes/threads should do checking at the same
         time. Default is 1. (-j N) */
     unsigned int jobs;
@@ -173,7 +183,7 @@ public:
     /** @brief Maximum number of configurations to check before bailing.
         Default is 12. (--max-configs=N) */
     unsigned int maxConfigs;
-
+    bool CheckIfJumpCode(const std::string& str) const { return _jumpCode.find(str) != _jumpCode.end(); }
     /**
      * @brief Returns true if given id is in the list of
      * enabled extra checks (--enable)
@@ -287,6 +297,22 @@ public:
         }
         return false;
     }
+    bool load_custom_cfg_xml(const std::string &strPath, const char szExeName[]);
+    ////const std::string ANY_TYPE_T;
+    ////const char* returnKeyWord;
+    ////bool _recordFuncinfo;
+    std::set<std::string> _equalTypeForFuncSig;
+    std::set<std::string> _nonPtrType;
+    std::set<std::string> _keywordBeforeFunction;
+    bool OpenCodeTrace;
+    std::multimap<std::string, std::pair<std::string, std::vector<std::string> > >  _functionNotRetNull;
+    int _big_file_token_size;
+    int _big_header_file_size;
+    int _large_includes;
+    std::set<std::string>  _NonReferenceType;
+    std::vector<std::string>  _customSelfMalloc;
+    std::vector<std::string>  _customSelfDelloc;
+    std::set<std::string> _headerExtension;
 };
 
 /// @}

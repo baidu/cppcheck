@@ -7859,6 +7859,8 @@ void Tokenizer::macroWithSemicolonError(const Token *tok, const std::string &mac
 
 void Tokenizer::cppcheckError(const Token *tok) const
 {
+    // close cppcheckError
+    return;
     printDebugOutput(0);
     throw InternalError(tok, "Analysis failed. If the code is valid then please report this failure.", InternalError::INTERNAL);
 }

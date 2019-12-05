@@ -69,6 +69,9 @@
     <ClCompile Include="checkpostfixoperator.cpp" />
     <ClCompile Include="checksizeof.cpp" />
     <ClCompile Include="checkstl.cpp" />
+    <ClCompile Include="checktscnullpointer2.cpp" />
+    <ClCompile Include="checktscoverrun.cpp" />
+    <ClCompile Include="checktscsuspicious.cpp" />
     <ClCompile Include="checktype.cpp" />
     <ClCompile Include="checkuninitvar.cpp" />
     <ClCompile Include="checkunusedfunctions.cpp" />
@@ -76,6 +79,9 @@
     <ClCompile Include="checkvaarg.cpp" />
     <ClCompile Include="cppcheck.cpp" />
     <ClCompile Include="errorlogger.cpp" />
+    <ClCompile Include="filedepend.cpp" />
+    <ClCompile Include="globalsymboldatabase.cpp" />
+    <ClCompile Include="globaltokenizer.cpp" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="mathlib.cpp" />
     <ClCompile Include="path.cpp" />
@@ -83,14 +89,17 @@
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="preprocessor.cpp" />
     <ClCompile Include="importproject.cpp" />
+    <ClCompile Include="process_config.cpp" />
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="suppressions.cpp" />
     <ClCompile Include="symboldatabase.cpp" />
     <ClCompile Include="templatesimplifier.cpp" />
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="token.cpp" />
+    <ClCompile Include="tokenex.cpp" />
     <ClCompile Include="tokenize.cpp" />
     <ClCompile Include="tokenlist.cpp" />
+    <ClCompile Include="utilities.cpp" />
     <ClCompile Include="valueflow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +128,9 @@
     <ClInclude Include="checkpostfixoperator.h" />
     <ClInclude Include="checksizeof.h" />
     <ClInclude Include="checkstl.h" />
+    <ClInclude Include="checktscnullpointer2.h" />
+    <ClInclude Include="checktscoverrun.h" />
+    <ClInclude Include="checktscsuspicious.h" />
     <ClInclude Include="checktype.h" />
     <ClInclude Include="checkuninitvar.h" />
     <ClInclude Include="checkunusedfunctions.h" />
@@ -127,6 +139,9 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="cppcheck.h" />
     <ClInclude Include="errorlogger.h" />
+    <ClInclude Include="filedepend.h" />
+    <ClInclude Include="globalsymboldatabase.h" />
+    <ClInclude Include="globaltokenizer.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="mathlib.h" />
     <ClInclude Include="path.h" />
@@ -134,14 +149,17 @@
     <ClInclude Include="platform.h" />
     <ClInclude Include="preprocessor.h" />
     <ClInclude Include="importproject.h" />
+    <ClInclude Include="process_config.h" />
     <ClInclude Include="settings.h" />
     <ClInclude Include="suppressions.h" />
     <ClInclude Include="symboldatabase.h" />
     <ClInclude Include="templatesimplifier.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="token.h" />
+    <ClInclude Include="tokenex.h" />
     <ClInclude Include="tokenize.h" />
     <ClInclude Include="tokenlist.h" />
+    <ClInclude Include="utilities.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="valueflow.h" />
     <ClInclude Include="version.h" />
@@ -162,7 +180,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-PCRE|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>

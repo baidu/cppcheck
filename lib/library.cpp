@@ -1188,3 +1188,49 @@ bool Library::isimporter(const std::string& file, const std::string &importer) c
         _importers.find(Path::getFilenameExtensionInLowerCase(file));
     return (it != _importers.end() && it->second.count(importer) > 0);
 }
+
+////tsc
+bool Library::check_if_lib_function_return_null(const std::string &strFuncName) const
+{
+    return functionretnull.find(strFuncName) != functionretnull.end();
+}
+
+bool Library::get_lib_not_null_param_index_by_name(std::set<int> &derefIndex,
+    const std::string& strFuncName) const
+{
+    if (strFuncName.empty())
+    {
+        return false;
+    }
+    bool b_lib_func = false;
+    ////tsc
+    std::map<std::string, Function>::const_iterator it1
+        = functions.find(strFuncName);
+    if (it1 == functions.cend()) {
+        return nullptr;
+    }
+    else
+        ////std::map<std::string, std::map<int, Library::ArgumentChecks> >::const_iterator iter_lib 
+        ////    = argumentChecks.find(strFuncName);
+        ////if (iter_lib != argumentChecks.end())
+    {
+        b_lib_func = true;
+        for (std::map<int, Library::ArgumentChecks>::const_iterator iter_arg
+            ////= iter_lib->second.begin(), iter_arg_end = iter_lib->second.end();
+            = it1->second.argumentChecks.cbegin(), iter_arg_end = it1->second.argumentChecks.cend();
+        iter_arg != iter_arg_end; ++iter_arg)
+        {
+            if (iter_arg->second.notnull)
+            {
+                //note that param index starts from 1 in cfg files
+                derefIndex.insert(iter_arg->first - 1);
+            }
+        }
+    }
+    return b_lib_func;
+}
+
+bool Library::check_if_is_lib_function(const std::string &strFuncName) const
+{
+    return stdfunction.find(strFuncName) != stdfunction.end();
+}

@@ -27,6 +27,7 @@
 #include "errorlogger.h"
 #include "importproject.h"
 #include "settings.h"
+#include "process_config.h"
 
 #include <cstddef>
 #include <istream>

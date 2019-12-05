@@ -41,7 +41,8 @@ struct CWE {
 };
 
 
-
+////tsc
+class Scope;
 class Token;
 class TokenList;
 
@@ -373,6 +374,8 @@ public:
                "</dict>\r\n"
                "</plist>";
     }
+    ////tsc
+    static void GetScopeFuncInfo(const Scope* s, std::string &_lastFuncName);
 };
 
 /// @}

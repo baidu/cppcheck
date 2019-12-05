@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+    <constinfo isopen="" desc="" version="1.00">
+    <subid name="xx" isopen="1" value="100"/>
+    <subid name="EXIT" isopen="1" value="error_quit#exit#std::exit#::exit#_exit#throw#force_exit#RET_CHECK_ERROR#RETURN_FALSE#CONT_THROW"/>
+    <subid name="NULL" isopen="1" value="CN_NULL"/>
+    <subid name="RETURN_VALUE" isopen="1" value="return|(|, %varid% %op% %name% [);,]#return|(|, %varid% . %name% [);,]"/>
+    </constinfo>
+</config>

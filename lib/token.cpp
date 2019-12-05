@@ -32,7 +32,9 @@
 #include <set>
 #include <stack>
 #include <utility>
-
+////tsc
+std::set<std::string> Token::stdTypes = make_container<std::set<std::string> >() <<
+"bool" << "char" << "char16_t" << "char32_t" << "double" << "float" << "int" << "long" << "short" << "size_t" << "void" << "wchar_t";
 const std::list<ValueFlow::Value> Token::emptyValueList;
 
 Token::Token(Token **tokens) :
@@ -289,6 +291,21 @@ void Token::deleteThis()
         // ourselves, so just make us empty
         str("");
     }
+}
+
+////tsc
+bool Token::isInScope(unsigned type) const
+{
+    const Scope* scope = _scope;
+    while (scope)
+    {
+        if (scope->type == (Scope::ScopeType)type)
+        {
+            return true;
+        }
+        scope = scope->nestedIn;
+    }
+    return false;
 }
 
 void Token::replace(Token *replaceThis, Token *start, Token *end)
@@ -1419,6 +1436,22 @@ void Token::printValueFlow(bool xml, std::ostream &out) const
     }
     if (xml)
         out << "  </valueflow>" << std::endl;
+}
+
+////tsc
+const Scope* Token::get_current_scope() const
+{
+    const Scope *currScope = _scope;
+    while (currScope && currScope->isExecutable())
+    {
+        if (currScope->functionOf) {
+            currScope = currScope->functionOf;
+        }
+        else
+            currScope = currScope->nestedIn;
+    }
+
+    return currScope;
 }
 
 const ValueFlow::Value * Token::getValueLE(const MathLib::bigint val, const Settings *settings) const

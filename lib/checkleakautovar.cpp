@@ -142,6 +142,14 @@ void CheckLeakAutoVar::doubleFreeError(const Token *tok, const std::string &varn
 
 void CheckLeakAutoVar::check()
 {
+    // user's customization
+    std::string exit_str = ProcessConfig::value_of_key("EXIT");
+    std::string null_str = ProcessConfig::value_of_key("NULL");
+    std::vector<std::string> exit_vec;
+    _common_file.string_split(exit_str, exit_vec, "#");
+    std::vector<std::string> null_vec;
+    _common_file.string_split(null_str, null_vec, "#");
+
     const SymbolDatabase *symbolDatabase = _tokenizer->getSymbolDatabase();
 
     // Local variables that are known to be non-zero.
@@ -157,7 +165,7 @@ void CheckLeakAutoVar::check()
         // Empty variable info
         VarInfo varInfo;
 
-        checkScope(scope->classStart, &varInfo, notzero);
+        checkScope(scope->classStart, &varInfo, notzero, exit_vec, null_vec);
 
         varInfo.conditionalAlloc.clear();
 
@@ -188,7 +196,9 @@ static bool isVarUsedInTree(const Token *tok, unsigned int varid)
 
 void CheckLeakAutoVar::checkScope(const Token * const startToken,
                                   VarInfo *varInfo,
-                                  std::set<unsigned int> notzero)
+                                  std::set<unsigned int> notzero,
+                                  std::vector<std::string>& exit_vec,
+                                  std::vector<std::string>& null_vec)
 {
     std::map<unsigned int, VarInfo::AllocInfo> &alloctype = varInfo->alloctype;
     std::map<unsigned int, std::string> &possibleUsage = varInfo->possibleUsage;
@@ -224,6 +234,13 @@ void CheckLeakAutoVar::checkScope(const Token * const startToken,
             VarInfo::AllocInfo allocation(0, VarInfo::NOALLOC);
             functionCall(tok->previous(), varInfo, allocation, nullptr);
             tok = tok->link();
+            continue;
+        }
+
+        if (tok->str() == "=" && tok->next()->str() == "{" && tok->previous()->isName()) {
+            VarInfo::AllocInfo allocation(0, VarInfo::NOALLOC);
+            function_call_share_ptr(tok->previous(), varInfo, allocation, nullptr);
+            tok = tok->next()->link();
             continue;
         }
 
@@ -407,12 +424,25 @@ void CheckLeakAutoVar::checkScope(const Token * const startToken,
                     } else if (astIsVariableComparison(tok3, "==", "-1", &vartok)) {
                         varInfo1.erase(vartok->varId());
                     }
+                    // user NULL
+                    for (std::vector<std::string>::iterator it = null_vec.begin();
+                        it != null_vec.end(); ++it) {
+                        if (astIsVariableComparison(tok3, "==", *it, &vartok)) {
+                            varInfo1.erase(vartok->varId());
+                        }
+                        if (astIsVariableComparison(tok3, "!=", *it, &vartok)) {
+                            varInfo2.erase(vartok->varId());
+                            if (notzero.find(vartok->varId()) != notzero.end()) {
+                                varInfo2.clear();
+                            }
+                        }
+                    }
                 }
 
-                checkScope(tok2->next(), &varInfo1, notzero);
+                checkScope(tok2->next(), &varInfo1, notzero, exit_vec, null_vec);
                 tok2 = tok2->linkAt(1);
                 if (Token::simpleMatch(tok2, "} else {")) {
-                    checkScope(tok2->tokAt(2), &varInfo2, notzero);
+                    checkScope(tok2->tokAt(2), &varInfo2, notzero, exit_vec, null_vec);
                     tok = tok2->linkAt(2)->previous();
                 } else {
                     tok = tok2->previous();
@@ -479,7 +509,8 @@ void CheckLeakAutoVar::checkScope(const Token * const startToken,
         }
 
         // return
-        else if (tok->str() == "return") {
+        //// else if (tok->str() == "return") {
+        else if (tok->str() == "return" || _common_file.find_in_vector(exit_vec, tok->str()) == true) {
             ret(tok, *varInfo);
             varInfo->clear();
         }
@@ -617,6 +648,51 @@ void CheckLeakAutoVar::functionCall(const Token *tok, VarInfo *varInfo, const Va
     }
 }
 
+void CheckLeakAutoVar::function_call_share_ptr(const Token *tok,
+        VarInfo *varInfo, const VarInfo::AllocInfo& allocation, const Library::AllocFunc* af)
+{
+    // Ignore function call?
+    if (_settings->library.isLeakIgnore(tok->str())) {
+        return;
+    }
+
+    int arg_nr = 1;
+    for (const Token *arg = tok->tokAt(3); arg; arg = arg->nextArgument()) {
+        if (_tokenizer->isCPP() && arg->str() == "new") {
+            arg = arg->next();
+            if (Token::simpleMatch(arg, "( std :: nothrow )")) {
+                arg = arg->tokAt(6);
+            }
+        }
+
+        while (Token::Match(arg, "%var% . %var%")) {
+            arg = arg->tokAt(3);
+        }
+
+        if (Token::Match(arg, "%var% [-,)] !!.") || Token::Match(arg, "& %var%")) {
+            // goto variable
+            if (arg->str() == "&") {
+                arg = arg->next();
+            }
+
+            bool isnull = arg->hasKnownIntValue() && arg->values().front().intvalue == 0;
+
+            // Is variable allocated?
+            if (!isnull && (!af || af->arg == arg_nr)) {
+                changeAllocStatus(varInfo, allocation, tok, arg);
+            }
+        }
+        else if (Token::Match(arg, "%name% (")) {
+            const Library::AllocFunc* allocFunc = _settings->library.dealloc(arg);
+            VarInfo::AllocInfo alloc(allocFunc ? allocFunc->groupId : 0, VarInfo::DEALLOC);
+            if (alloc.type == 0) {
+                alloc.status = VarInfo::NOALLOC;
+            }
+            functionCall(arg, varInfo, alloc, allocFunc);
+        }
+        arg_nr++;
+    }
+}
 
 void CheckLeakAutoVar::leakIfAllocated(const Token *vartok,
                                        const VarInfo &varInfo)
@@ -637,6 +713,11 @@ void CheckLeakAutoVar::leakIfAllocated(const Token *vartok,
 
 void CheckLeakAutoVar::ret(const Token *tok, const VarInfo &varInfo)
 {
+    // user's customization
+    std::string return_str = ProcessConfig::value_of_key("RETURN_VALUE");
+    std::vector<std::string> return_vec;
+    _common_file.string_split(return_str, return_vec, "#");
+
     const std::map<unsigned int, VarInfo::AllocInfo> &alloctype = varInfo.alloctype;
     const std::map<unsigned int, std::string> &possibleUsage = varInfo.possibleUsage;
 
@@ -664,6 +745,14 @@ void CheckLeakAutoVar::ret(const Token *tok, const VarInfo &varInfo)
                 if (Token::Match(tok2, "return|(|, & %varid% . %name% [);,]", varid)) {
                     used = true;
                     break;
+                }
+                // some case
+                for (std::vector<std::string>::iterator it = return_vec.begin();
+                    it != return_vec.end(); ++it) {
+                    if (Token::Match(tok2, (*it).c_str(), varid)) {
+                        used = true;
+                        break;
+                    }
                 }
             }
 

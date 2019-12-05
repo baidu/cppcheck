@@ -36,6 +36,7 @@
 #include "config.h"
 #include "errorlogger.h"
 #include "tokenize.h"
+#include "process_config.h"
 
 #include <list>
 #include <string>
@@ -319,6 +320,7 @@ private:
     }
 
     const SymbolDatabase *symbolDatabase;
+    CommonFile _common_file;
 };
 
 

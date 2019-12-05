@@ -108,7 +108,10 @@ public:
         const AllocFunc* af = getAllocDealloc(_dealloc, name);
         return af ? af->groupId : 0;
     }
-
+    ////tsc
+    std::set<std::string> functionexit;
+    std::set<std::string> functionretnull;
+    std::set<std::string> stdfunction;
     /** set allocation id for function */
     void setalloc(const std::string &functionname, int id, int arg) {
         _alloc[functionname].groupId = id;
@@ -428,7 +431,11 @@ public:
         const std::map<std::string, PlatformType>::const_iterator it2 = platform_types.find(name);
         return (it2 != platform_types.end()) ? &(it2->second) : nullptr;
     }
-
+    ////tsc
+    //return if function shall return nullptr
+    bool check_if_lib_function_return_null(const std::string & strFuncName) const;
+    bool check_if_is_lib_function(const std::string & strFuncName) const;
+    bool get_lib_not_null_param_index_by_name(std::set<int> &derefIndex, const std::string &strFuncName) const;
     /**
      * Get function name for function call
      */

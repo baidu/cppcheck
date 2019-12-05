@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
     } catch (const std::exception& error) {
         std::cout << error.what() << std::endl;
     } catch (...) {
-        std::cout << "Unknown exception" << std::endl;
+        std::cout << "Unknown exception..." << std::endl;
     }
     return EXIT_FAILURE;
 #endif

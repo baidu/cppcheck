@@ -44,7 +44,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-PCRE|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -391,6 +391,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lib\config.h" />
+    <ClInclude Include="..\lib\process_config.h" />
     <ClInclude Include="cmdlineparser.h" />
     <ClInclude Include="cppcheckexecutor.h" />
     <ClInclude Include="filelister.h" />
@@ -402,6 +403,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\lib\process_config.cpp" />
     <ClCompile Include="cmdlineparser.cpp" />
     <ClCompile Include="cppcheckexecutor.cpp" />
     <ClCompile Include="filelister.cpp" />

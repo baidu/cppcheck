@@ -176,6 +176,7 @@ public:
 
 /** @brief Information about a member variable. */
 class CPPCHECKLIB Variable {
+public:
     /** @brief flags mask used to access specific bit. */
     enum {
         fIsMutable   = (1 << 0), /** @brief mutable variable */
@@ -191,7 +192,8 @@ class CPPCHECKLIB Variable {
         fIsStlType   = (1 << 10), /** @brief STL type ('std::') */
         fIsStlString = (1 << 11), /** @brief std::string|wstring|basic_string&lt;T&gt;|u16string|u32string */
         fIsFloatType = (1 << 12), /** @brief Floating point type */
-        fIsVolatile  = (1 << 13)  /** @brief volatile */
+        fIsVolatile  = (1 << 13),  /** @brief volatile */
+        fIsIntType = (1 << 14) /////tsc
     };
 
     /**
@@ -233,7 +235,10 @@ public:
           _scope(scope_) {
         evaluate(lib);
     }
-
+    ////tsc
+    unsigned getBaseFlag() const {
+        return _flags;
+    }
     /**
      * Get name token.
      * @return name token
@@ -354,7 +359,11 @@ public:
     bool isArgument() const {
         return _access == Argument;
     }
-
+    ////tsc
+    AccessControl getAccess() const
+    {
+        return _access;
+    }
     /**
      * Is variable local.
      * @return true if local, false if not
@@ -598,7 +607,10 @@ public:
     }
 
     void setFlags(const ValueType &valuetype);
-
+    ////tsc
+    bool isIntegralType() const {
+        return getFlag(fIsIntType);
+    }
 private:
     // only symbol database can change the type
     friend class SymbolDatabase;
@@ -706,7 +718,10 @@ public:
     const std::string &name() const {
         return tokenDef->str();
     }
-
+    ////tsc
+    unsigned getBaseFlag() const {
+        return flags;
+    }
     std::size_t argCount() const {
         return argumentList.size();
     }
@@ -944,6 +959,22 @@ public:
 
     bool isClassOrStructOrUnion() const {
         return (type == eClass || type == eStruct || type == eUnion);
+    }
+    ////tsc
+    bool isFunction() const {
+        return type == eFunction;
+    }
+    ScopeType GetScopeType() const
+    {
+        return type;
+    }
+
+    bool isNamespace() const {
+        return type == eNamespace;
+    }
+
+    bool isGlobal() const {
+        return type == eGlobal;
     }
 
     bool isExecutable() const {

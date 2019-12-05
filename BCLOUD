@@ -1,0 +1,1 @@
+BUILD_SUBMITTER -x -m baidu/codescan/bcacpp -c "cd baidu/codescan/bcacpp && mkdir output &&cp BCLOUD ./output/" -u ./
