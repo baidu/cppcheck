@@ -1,126 +1,151 @@
-# **Cppcheck** 
+﻿# BCA-Cpp
 
-|Linux Build Status|Windows Build Status|Coverity Scan Build Status|
-|:--:|:--:|:--:|
-|[![Linux Build Status](https://img.shields.io/travis/danmar/cppcheck/master.svg?label=Linux%20build)](https://travis-ci.org/danmar/cppcheck)|[![Windows Build Status](https://img.shields.io/appveyor/ci/danmar/cppcheck/master.svg?label=Windows%20build)](https://ci.appveyor.com/project/danmar/cppcheck/branch/master)|[![Coverity Scan Build Status](https://img.shields.io/coverity/scan/512.svg)](https://scan.coverity.com/projects/512)|
+BCA-Cpp是一个针对C/C++代码的分析工具,内核基于开源工具cppcheck,并集成了其他工具优秀的规则，结合百度大量的研发实践不断扩展规则并进行误报优化。
+它能够发现代码中存在的BUG，并且关注于发现未定义的行为和一些危险的代码构造。
 
-## Donations
+#### 特点
+- 通过特别的分析检测代码中各种错误。
+- 命令行界面和图形用户界面都可用。
+- 非常注重检测未定义的行为。
+- 较Cppcheck扩展了内存泄漏场景的检测。
+- 基于百度大量研发实践进行误报优化。
 
-If you find Cppcheck useful for you, feel free to make a donation.
+## 快速开始
 
-[![Donate](http://pledgie.com/campaigns/4127.png)](http://pledgie.com/campaigns/4127)
+#### 准备工作
+下载项目并进入根目录
 
-## About the name
+```
+cd bcacpp
+```
 
-The original name of this program was "C++check", but it was later changed to "Cppcheck".
+#### 如何构建
+拷贝打包后的压缩文件target/bcacpp*.zip到指定目录，解压即可。
+进入根目录，运行
 
-Despite the name, Cppcheck is designed for both C and C++.
+```
+./install.sh
+```
 
-## Manual
-
-A manual is available [online](http://cppcheck.sourceforge.net/manual.pdf).
-
-## Compiling
-
-Any C++11 compiler should work. For compilers with partial C++11 support it may work. If your compiler has the C++11 features that are available in Visual Studio 2010 then it will work. If nullptr is not supported by your compiler then this can be emulated using the header lib/cxx11emu.h.
-
-To build the GUI, you need Qt.
-
-When building the command line tool, [PCRE](http://www.pcre.org/) is optional. It is used if you build with rules.
-
-There are multiple compilation choices:
-* qmake - cross platform build tool
-* cmake - cross platform build tool
-* Windows: Visual Studio (VS 2010 and above)
-* Windows: Qt Creator + mingw
-* gnu make
-* g++ 4.6 (or later)
-* clang++
-
-### qmake
-
-You can use the gui/gui.pro file to build the GUI.
-
-```shell
-cd gui
-qmake
+```
 make
 ```
+参考：[cppcheck参考手册](http://cppcheck.sourceforge.net/manual.pdf)
+#### 如何运行
+BCA-Cpp基本保留了cppcheck的执行方式，在根目录下运行
 
-### Visual Studio
+```
+cppcheck path
+```
+参数：
+- -i 可以指定要忽略的文件/路径 
+`cppcheck -i src/a src` 检测src目录下所有.cpp&.c文件，忽略src/a中的文件。
+`cppcheck -i src/b -i src/c src` 忽略多个文件
+-  \- -project=<file> 可以对单个项目文件（.vcxproj）或整个解决方案运行Cppcheck
+`cppcheck --project=foobar.sln` 在整个Visual Studio解决方案上运行Cppcheck
+`cppcheck --project=foobar.vcxproj` 在Visual Studio项目上运行Cppcheck
+- -f, --force 强制检查文件中的所有配置。如果与“--max configs=”一起使用，则最后一个选项是有效的
+- --template='\<text>' 使用模板格式化输出
+`cppcheck --template=vs path`   获取与Visual Studio兼容的输出
+## 测试
 
-Use the cppcheck.sln file. The file is configured for Visual Studio 2015, but the platform toolset can be changed easily to older or newer versions. The solution contains platform targets for both x86 and x64.
+src/test目录下包含测试源码目录。运行`cppcheck bcacpp/test/testsymboldatabase.cpp`，如果正常会得到类似下面的结果：
 
-To compile with rules, select "Release-PCRE" or "Debug-PCRE" configuration. pcre.lib (pcre64.lib for x64 builds) and pcre.h are expected to be in /externals then.
+> bcacpp/test/testsymboldatabase.cpp(4393): error: Comparing [tok] to
+> null at line 4390 implies that [tok ] might be null.Dereferencing null pointer [tok].
+> 
+> bcacpp/test/testsymboldatabase.cpp(5266): error: Comparing [autotok]
+> to null at line 5260 implies that [autotok ] might be null.Dereferencing null pointer
 
-### Qt Creator + MinGW
+## 自定义check
 
-The PCRE dll is needed to build the CLI. It can be downloaded here:
-http://software-download.name/pcre-library-windows/
+#### step1
+Bca-Cpp会在读取源代码并在使用规则之前对其进行处理。
+旨在查找错误和危险代码。文体信息（如缩进、注释等）在早期被过滤掉。当你写规则的时候，你不需要担心这样的文体信息。
+代码中的每个标记之间总是有一个空格。例如，原始代码“1+f()”被处理为“1 + f（ ）”。
+使用的数据表示是专门为静态分析而设计的。在工具中，数据在许多方面被简化了。
+**预处理**
+原始代码 `#define SIZE 123 char a[SIZE];`
+BCA-Cpp的数据的是  `char a [ 123 ] ;`
 
-### GNU make
+**类型定义**
+原始代码 `typedef char s8; s8 x;`
+BCA-Cpp的数据是  `; char x ;`
 
-Simple, unoptimized build (no dependencies):
+**计算**
+原始代码 `int a[10 + 4];`
+BCA-Cpp的数据是  `int a [ 14 ] ;`
+**变量**
 
-```shell
-make
+- 变量声明，变量声明被简化。一次只能声明一个变量。初始化也被分解成一个单独的语句。
+原始代码 `int *a=0, b=2;`
+BCA-Cpp的数据是  `int * a ; a = 0 ; int b ; b = 2 ;`
+- 已知变量的值
+
+原始代码
+```cpp
+void f() {    
+	int x = 0;    
+	x++;    
+	array[x + 2] = 0; 
+}
+```
+BCA-Cpp的数据是
+
+```cpp
+void f ( ) { 
+	; ;  
+	;
+	array [ 3 ] = 0 ; 
+}
 ```
 
-The recommended release build is:
+> 变量x将被删除，因为它在简化后未被使用。因此，这是多余的。“已知值”不必是数字。变量别名、指针别名、字符串等也应该处理。
 
-```shell
-make SRCDIR=build CFGDIR=cfg HAVE_RULES=yes CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function"
+例
+
+```cpp
+void f() {    
+	char *a = strdup("hello");    
+	char *b = a;    
+	free(b); 
+}
 ```
+BCA-Cpp的数据是
 
-Flags:
-
-1.  `SRCDIR=build`  
-    Python is used to optimise cppcheck
-
-2.  `CFGDIR=cfg`  
-    Specify folder where .cfg files are found
-
-3.  `HAVE_RULES=yes`  
-    Enable rules (PCRE is required if this is used)
-
-4.  `CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function"`
-    Enables most compiler optimizations, disables cppcheck-internal debugging code and enables basic compiler warnings.
-
-### g++ (for experts)
-
-If you just want to build Cppcheck without dependencies then you can use this command:
-
-```shell
-g++ -o cppcheck -std=c++0x -include lib/cxx11emu.h -Iexternals/simplecpp -Iexternals/tinyxml -Ilib cli/*.cpp lib/*.cpp externals/simplecpp/simplecpp.cpp externals/tinyxml/*.cpp
+```cpp
+void f ( ) 
+{ 
+	char * a@1 ; a@1 = strdup ( "hello" ) ; 
+	; ; 
+	free ( a@1 ) ; 
+}
 ```
+**参考** [cppcheck数据表示](https://sourceforge.net/projects/cppcheck/files/Articles/writing-rules-2.pdf/download)
+#### step2 
+[创建规则表达式](https://sourceforge.net/projects/cppcheck/files/Articles/writing-rules-1.pdf/download)
 
-If you want to use `--rule` and `--rule-file` then dependencies are needed:
 
-```shell
-g++ -o cppcheck -std=c++0x -include lib/cxx11emu.h -lpcre -DHAVE_RULES -Ilib -Iexternals/simplecpp -Iexternals/tinyxml cli/*.cpp lib/*.cpp externals/simplecpp/simplecpp.cpp externals/tinyxml/*.cpp
-```
 
-### MinGW
 
-```shell
-mingw32-make LDFLAGS=-lshlwapi
-```
+## 如何贡献
 
-### Other Compiler/IDE
+1. 贡献代码类型
+  -- 项目优化与bug修复
+  -- 新增扫描规则
+2. 贡献代码步骤
+-- 添加百度hi讨论组，与项目Owner讨论此需求的必要性
+-- 确认需求后，需拉分支进行本地开发，并进行线下测试
+-- 测试完成后，提交代码到icode上
+-- 项目Owner评审通过并合入
+3. 质量要求
+-- 项目优化与bug修复必须通过单元测试
+-- 通过项目Owner的人工review
 
-1. Create a empty project file / makefile.
-2. Add all cpp files in the cppcheck cli and lib folders to the project file / makefile.
-3. Add all cpp files in the externals folders to the project file / makefile.
-4. Compile.
+## 维护者
 
-### Cross compiling Win32 (CLI) version of Cppcheck in Linux
+ Owners：bugbye@baidu.com
 
-```shell
-sudo apt-get install mingw32
-make CXX=i586-mingw32msvc-g++ LDFLAGS="-lshlwapi" RDYNAMIC=""
-mv cppcheck cppcheck.exe
-```
+ 
 
-## Webpage
 
-http://cppcheck.sourceforge.net/
